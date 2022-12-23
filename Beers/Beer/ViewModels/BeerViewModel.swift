@@ -20,6 +20,7 @@ struct BeerViewModel {
     var abv: Double { self.beer.abv }
     var ibu: Double { self.beer.ibu ?? 0.0 }
     var tagline: String { self.beer.tagline }
+    var description: String{ self.beer.description }
     var imageUrl: String { self.beer.imageUrl }
     var isFavorite: Bool { self.beer.isFavorite }
     
@@ -42,6 +43,12 @@ struct BeerViewModel {
             .map { (url, UIImage(data: $0)) }
             .catch { error in Empty<(URL, UIImage?), Error>() }
             .eraseToAnyPublisher()
+    }
+    
+    mutating func favoriteChanged() {
+        self.beer.isFavorite.toggle()
+        NotificationCenter.default.post(name: .beerFavoriteToggled, object: nil, userInfo: [ "id": self.beer.id ])
+
     }
 
 }

@@ -30,18 +30,13 @@ class HomeViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = Consts.cellEstimatedSize
+        tableView.sectionFooterHeight = 0.0
+        tableView.sectionHeaderHeight = 0.0
         tableView.alpha = 0.0
         tableView.register(BeerCell.self, forCellReuseIdentifier: BeerCell.reuseIdentifier)
-
+        tableView.register(LoadingCell.self, forCellReuseIdentifier: LoadingCell.reuseIdentifier)
+        
         return tableView
-    }()
-    
-    lazy var activityIndicator: UIActivityIndicatorView = {
-        let view = UIActivityIndicatorView(style: .large)
-        
-        view.translatesAutoresizingMaskIntoConstraints = false
-        
-        return view
     }()
     
     // MARK: Public methods
@@ -54,8 +49,16 @@ class HomeViewController: UIViewController {
         self.viewModel.loadBeers()
         self.viewModel
             .$beers
+            .dropFirst()
             .receive(on: DispatchQueue.main)
             .sink { [ weak self ] _ in self?.reloadData() }
+            .store(in: &cancellables)
+        
+        self.viewModel
+            .$isLoading
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [ weak self ] isLoading in self?.showLoading(isLoading) }
             .store(in: &cancellables)
     }
     
@@ -68,7 +71,6 @@ class HomeViewController: UIViewController {
     
     private func setup() {
         self.view.addSubview(self.tableView)
-        self.view.addSubview(self.activityIndicator)
         
         NSLayoutConstraint.activate([
             self.tableView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
@@ -76,25 +78,25 @@ class HomeViewController: UIViewController {
             self.tableView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
             self.tableView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
         ])
-        
-        NSLayoutConstraint.activate([
-            self.activityIndicator.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            self.activityIndicator.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
-        ])
-        
-        self.activityIndicator.startAnimating()
     }
     
     private func reloadData() {
-        guard self.viewModel.beers.count >= 0 else { return }
-
         self.tableView.reloadData()
         
         guard self.tableView.alpha == 0.0 else { return }
         
         UIView.animate(withDuration: 0.3, delay: 0.0) {
-            self.activityIndicator.alpha = 0.0
             self.tableView.alpha = 1.0
+        }
+    }
+    
+    private func showLoading(_ show: Bool) {
+        let indexPath = IndexPath(row: 0, section: 1)
+
+        if show {
+            self.tableView.insertRows(at: [ indexPath ], with: .automatic)
+        } else if self.tableView(self.tableView, numberOfRowsInSection: 1) > 0 {
+            self.tableView.deleteRows(at: [ indexPath ], with: .automatic)
         }
     }
 
@@ -103,14 +105,43 @@ class HomeViewController: UIViewController {
 // MARK: -
 
 extension HomeViewController: UITableViewDataSource {
-
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 2
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.viewModel.beers.count
+        if section == 0 {
+            return self.viewModel.beers.count
+        } else if section == 1 {
+            return self.viewModel.isLoading ? 1 : 0
+        }
+
+        return 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let viewModel = BeerViewModel(beer: self.viewModel.beers[indexPath.row])
-        return BeerCell.dequeueReusableCell(from: tableView, viewModel: viewModel, for: indexPath)
+        if indexPath.section == 0 {
+            let viewModel = BeerViewModel(beer: self.viewModel.beers[indexPath.row])
+            let cell = BeerCell.dequeueReusableCell(from: tableView, viewModel: viewModel, for: indexPath)
+
+            cell.eventPublisher
+                .sink { [ weak self, indexPath ] event in self?.handleEvent(event, indexPath: indexPath) }
+                .store(in: &cell.cancellables)
+
+            return cell
+        } else {
+            return LoadingCell.dequeueReusableCell(from: tableView, for: indexPath)
+        }
+    }
+    
+    // MARK: Helpers
+    
+    private func handleEvent(_ event: BeerCellEvent, indexPath: IndexPath) {
+        switch event {
+        case .favoriteChanged:
+            self.viewModel.beerFavoriteChanged(at: indexPath.row)
+        }
     }
     
 }
@@ -128,4 +159,9 @@ extension HomeViewController: UITableViewDelegate {
         self.navigationController?.pushViewController(vc, animated: true)
     }
     
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard !self.viewModel.isLoading, indexPath.row > self.viewModel.beers.count - 3 else { return }
+        self.viewModel.loadBeers()
+    }
+
 }

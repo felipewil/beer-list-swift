@@ -15,12 +15,14 @@ class HomeViewModel {
     }
     
     private enum Endpoint {
-        case beers
+        case beers(page: Int)
         
         var url: URL? {
             switch self {
-            case .beers:
-                return Consts.baseURL?.appending(path: "beers")
+            case .beers(let page):
+                return Consts.baseURL?
+                    .appending(path: "beers")
+                    .appending(queryItems: [ URLQueryItem(name: "page", value: "\(page)") ])
             }
         }
     }
@@ -28,6 +30,11 @@ class HomeViewModel {
     // MARK: Properties
     
     private let urlSession: URLSession
+    private var currentPage = 0
+    private var cancellables: Set<AnyCancellable> = []
+    private(set) var hasMore = true
+    @Published private(set) var isLoading = false
+    @Published private(set) var beers: [ Beer ] = []
     
     // MARK: Initialization
     
@@ -35,27 +42,40 @@ class HomeViewModel {
         self.urlSession = urlSession
         self.setupNotifications()
     }
-
-    // MARK: Properties
-    
-    private var cancellables: Set<AnyCancellable> = []
-    @Published private(set) var beers: [ Beer ] = []
     
     // MARK: Public methods
     
+    /// Load beers from API.
     func loadBeers() {
-        guard let url = Endpoint.beers.url else { return }
+        guard !self.isLoading, self.hasMore else { return }
+
+        self.currentPage += 1
         
+        guard let url = Endpoint.beers(page: self.currentPage).url else { return }
+
+        self.isLoading = true
         self.urlSession
             .dataTaskPublisher(for: url)
             .map(\.data)
             .decode(type: [ Beer ].self, decoder: JSONDecoder())
-            .catch { error in Empty<[ Beer ], Error>() }
+            .catch { error in
+                self.currentPage -= 1
+                self.isLoading = false
+
+                return Empty<[ Beer ], Error>()
+            }
             .receive(on: RunLoop.main)
             .sink { _ in } receiveValue: { result in
-                self.beers = result
+                self.beers.append(contentsOf: result)
+                self.isLoading = false
+                self.hasMore = self.currentPage < 4
             }
             .store(in: &cancellables)
+    }
+    
+    /// Informs view model that favorite status of a beer at the given index changed.
+    func beerFavoriteChanged(at index: Int) {
+        self.beers[index].isFavorite.toggle()
     }
     
     // MARK: Helpers
@@ -64,15 +84,15 @@ class HomeViewModel {
         NotificationCenter.default
             .publisher(for: .beerFavoriteToggled)
             .sink { [ weak self ] not in
-                if let name = not.userInfo?["beer"] as? String {
-                    self?.toggleFavorite(beerName: name)
+                if let id = not.userInfo?["id"] as? Int {
+                    self?.toggleFavorite(beerId: id)
                 }
             }
             .store(in: &cancellables)
     }
     
-    private func toggleFavorite(beerName: String) {
-        guard let index = self.beers.firstIndex(where: { $0.name == beerName }) else { return }
+    private func toggleFavorite(beerId: Int) {
+        guard let index = self.beers.firstIndex(where: { $0.id == beerId }) else { return }
         self.beers[index].isFavorite.toggle()
     }
 

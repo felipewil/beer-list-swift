@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CD64D74A2954F6D6000FE707 /* LoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD64D7492954F6D6000FE707 /* LoadingCell.swift */; };
 		CDD324A82950E7FC009775A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD324A72950E7FC009775A1 /* AppDelegate.swift */; };
 		CDD324AA2950E7FC009775A1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD324A92950E7FC009775A1 /* SceneDelegate.swift */; };
 		CDD324AC2950E7FC009775A1 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD324AB2950E7FC009775A1 /* HomeViewController.swift */; };
@@ -43,6 +44,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CD64D7492954F6D6000FE707 /* LoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingCell.swift; sourceTree = "<group>"; };
 		CDD324A42950E7FC009775A1 /* Beers.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Beers.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDD324A72950E7FC009775A1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CDD324A92950E7FC009775A1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -90,6 +92,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CD64D7482954F6CC000FE707 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CD64D7492954F6D6000FE707 /* LoadingCell.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		CDD3249B2950E7FC009775A1 = {
 			isa = PBXGroup;
 			children = (
@@ -115,6 +125,7 @@
 			children = (
 				CDD324A72950E7FC009775A1 /* AppDelegate.swift */,
 				CDD324A92950E7FC009775A1 /* SceneDelegate.swift */,
+				CD64D7482954F6CC000FE707 /* Components */,
 				CDD324D72950E80D009775A1 /* Home */,
 				CDD324DF2950EE29009775A1 /* Beer */,
 				CDD324E62950F410009775A1 /* Utils */,
@@ -330,6 +341,7 @@
 				CDD324EA2950F7E3009775A1 /* Notifications.swift in Sources */,
 				CDD324E32950EE49009775A1 /* BeerViewModel.swift in Sources */,
 				CDD324AC2950E7FC009775A1 /* HomeViewController.swift in Sources */,
+				CD64D74A2954F6D6000FE707 /* LoadingCell.swift in Sources */,
 				CDD324A82950E7FC009775A1 /* AppDelegate.swift in Sources */,
 				CDD324E82950F41D009775A1 /* UIImageView+Extensions.swift in Sources */,
 				CDD324DC2950E869009775A1 /* Beer.swift in Sources */,

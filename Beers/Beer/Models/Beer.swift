@@ -10,6 +10,7 @@ import Foundation
 struct Beer: Codable {
 
     enum CodingKeys: String, CodingKey {
+        case id
         case name
         case tagline
         case imageUrl = "image_url"
@@ -18,6 +19,7 @@ struct Beer: Codable {
         case description
     }
     
+    var id: Int
     var name: String
     var tagline: String
     var imageUrl: String

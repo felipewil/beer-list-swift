@@ -26,7 +26,8 @@ class BeerDetailsViewController: UIViewController {
         let imageView = UIImageView()
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        
+        imageView.contentMode = .scaleAspectFit
+
         return imageView
     }()
     
@@ -45,6 +46,33 @@ class BeerDetailsViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         
         return label
+    }()
+    
+    lazy var ibuLabel: UILabel = {
+        let label = UILabel()
+        
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        return label
+    }()
+    
+    lazy var descLabel: UILabel = {
+        let label = UILabel()
+        
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.textAlignment = .justified
+
+        return label
+    }()
+    
+    lazy var favoriteButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(image: UIImage(systemName: "heart"),
+                                     style: .plain,
+                                     target: self,
+                                     action: #selector(toggleFavorite))
+        
+        return button
     }()
     
     // MARK: Initialization
@@ -77,7 +105,7 @@ class BeerDetailsViewController: UIViewController {
     }
     
     // MARK: Helpers
-    
+
     private func setup() {
         self.title = self.viewModel?.name
         self.view.backgroundColor = .white
@@ -85,6 +113,10 @@ class BeerDetailsViewController: UIViewController {
         self.view.addSubview(self.beerImageView)
         self.view.addSubview(self.taglineLabel)
         self.view.addSubview(self.abvLabel)
+        self.view.addSubview(self.ibuLabel)
+        self.view.addSubview(self.descLabel)
+        
+        self.navigationItem.rightBarButtonItem = self.favoriteButton
         
         NSLayoutConstraint.activate([
             self.beerImageView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Consts.padding),
@@ -100,9 +132,21 @@ class BeerDetailsViewController: UIViewController {
         ])
         
         NSLayoutConstraint.activate([
-            self.taglineLabel.topAnchor.constraint(equalTo: self.abvLabel.bottomAnchor, constant: Consts.padding * 0.5),
-            self.taglineLabel.leftAnchor.constraint(equalTo: self.beerImageView.rightAnchor, constant: Consts.padding),
+            self.ibuLabel.topAnchor.constraint(equalTo: self.abvLabel.bottomAnchor, constant: Consts.padding),
+            self.ibuLabel.leftAnchor.constraint(equalTo: self.beerImageView.rightAnchor, constant: Consts.padding),
+            self.ibuLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Consts.padding),
+        ])
+        
+        NSLayoutConstraint.activate([
+            self.taglineLabel.topAnchor.constraint(equalTo: self.beerImageView.bottomAnchor, constant: Consts.padding),
+            self.taglineLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Consts.padding),
             self.taglineLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Consts.padding),
+        ])
+        
+        NSLayoutConstraint.activate([
+            self.descLabel.topAnchor.constraint(equalTo: self.taglineLabel.bottomAnchor, constant: Consts.padding),
+            self.descLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Consts.padding),
+            self.descLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Consts.padding),
         ])
         
         guard let viewModel else { return }
@@ -112,7 +156,20 @@ class BeerDetailsViewController: UIViewController {
         }
         
         self.taglineLabel.text = "Tagline: \(viewModel.tagline)"
-        self.abvLabel.text = "Abv: \(viewModel.abv)%"
+        self.abvLabel.text = "ABV: \(viewModel.abv)%"
+        self.ibuLabel.text = "IBU: \(viewModel.ibu)"
+        self.descLabel.text = viewModel.description
+        self.setFavoriteButtonImage()
+    }
+    
+    private func setFavoriteButtonImage() {
+        guard let viewModel else { return }
+        self.favoriteButton.image = UIImage(systemName: viewModel.isFavorite ? "heart.fill" : "heart")
+    }
+    
+    @objc private func toggleFavorite() {
+        self.viewModel?.favoriteChanged()
+        self.setFavoriteButtonImage()
     }
     
 }

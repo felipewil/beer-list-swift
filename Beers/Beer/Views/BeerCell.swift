@@ -8,6 +8,10 @@
 import UIKit
 import Combine
 
+enum BeerCellEvent {
+    case favoriteChanged
+}
+
 class BeerCell: UITableViewCell {
     
     private struct Consts {
@@ -19,8 +23,14 @@ class BeerCell: UITableViewCell {
     // MARK: Properties
     
     static let reuseIdentifier = "BeerCell"
-    private var cancellables: Set<AnyCancellable> = []
     private var viewModel: BeerViewModel?
+    private var eventSubject = PassthroughSubject<BeerCellEvent, Never>()
+
+    var eventPublisher: AnyPublisher<BeerCellEvent, Never> {
+        return self.eventSubject.eraseToAnyPublisher()
+    }
+
+    var cancellables: Set<AnyCancellable> = []
     
     // MARK: Subviews
     
@@ -78,7 +88,7 @@ class BeerCell: UITableViewCell {
 
         cell.viewModel = viewModel
         cell.nameLabel.text = "Name: \(viewModel.name)"
-        cell.abvLabel.text = "Abv: \(viewModel.abv) %"
+        cell.abvLabel.text = "ABV: \(viewModel.abv) %"
 
         if viewModel.isFavorite {
             cell.favoriteButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
@@ -92,8 +102,7 @@ class BeerCell: UITableViewCell {
     }
     
     override func prepareForReuse() {
-        cancellables.forEach { $0.cancel() }
-        cancellables = []
+        self.cancellables = []
         self.beerImageView.image = nil
     }
     
@@ -140,8 +149,7 @@ class BeerCell: UITableViewCell {
     }
     
     @objc private func toggleFavorite() {
-        guard let name = viewModel?.name else { return }
-        NotificationCenter.default.post(name: .beerFavoriteToggled, object: nil, userInfo: [ "beer": name ])
+        self.eventSubject.send(.favoriteChanged)
     }
 
 }
